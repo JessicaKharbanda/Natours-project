@@ -1,18 +1,29 @@
 const nodemailer = require('nodemailer');
 const pug = require('pug');
 const htmlToText = require('html-to-text');
+const resend = require('resend');
 
 module.exports = class Email {
   constructor(user, url) {
     this.to = user.email;
-    (this.firstName = user.name.split(' ')[0]),
-      (this.url = url),
-      (this.from = `Jessica Kharbanda <${process.env.EMAIL_FROM}>`);
+    this.firstName = user.name.split(' ')[0];
+    this.url = url;
+    if (process.env.NODE_ENV === 'production') {
+      this.from = 'onboarding@resend.dev'; // this is required if you do not use a domain
+    } else {
+      this.from = `Jessica Kharbanda <${process.env.EMAIL_FROM}>`;
+    }
   }
   newTransport() {
     if (process.env.NODE_ENV === 'production') {
-      //sendgrid
-      return 1;
+      return nodemailer.createTransport({
+        host: 'smtp.resend.com',
+        port: 465,
+        auth: {
+          user: 'resend',
+          pass: process.env.RESEND_API_KEY,
+        },
+      });
     }
 
     return nodemailer.createTransport({
